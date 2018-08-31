@@ -2,6 +2,20 @@
 
 Free Google Translate API - get word definitions, examples, synonyms and a lot more
 
+## Table of Contents
+
+* [Features](#features)
+* [Installation](#installation)
+* [Usage examples](#usage-examples)
+* [API](#api)
+  + [`translate(text, sourceLang, destLang, dataOptions)`](#-translate-text--sourcelang--destlang--dataoptions--)
+    - [Arguments](#arguments)
+    - [Response](#response)
+  + [dataOptions Object](#dataoptions-object)
+    - [Fields](#fields)
+    - [Defaults](#defaults)
+  + [Response Object](#response-object)
+
 ## Features
 
 - Fast and efficient - each request consumes about 1.5 Kb
