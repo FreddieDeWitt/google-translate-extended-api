@@ -1,6 +1,6 @@
 {
   "name": "extended-google-translate-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Free Google Translate Api - get word definitions, examples, synonyms and lots more from Google Translate",
   "main": "get-word-info.js",
   "scripts": {
