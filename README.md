@@ -127,8 +127,8 @@ See [`Response Object`](#response-object)
 #### Fields
 
 - `detailedTranslations`: Boolean
-- `synonims`: Boolean
-- `detailedTranslationsSynonims`: Boolean - almost each detailed translation contains synonyms.  Set this field to true if you want to get them.
+- `synonyms`: Boolean
+- `detailedTranslationsSynonyms`: Boolean - almost each detailed translation contains synonyms.  Set this field to true if you want to get them.
 - `definitions`: Boolean
 - `definitionExamples`: Boolean - almost each definition contains example(s). Set this field to true if you want to get them.
 - `examples`: Boolean
@@ -177,7 +177,7 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
   The keys of this object are word types (e.g. `noun`, `verb` etc.).  
   Each key contains an array of translations (`String`) or if `dataOption.detailedTranslationsSynonyms === true` - an array of the following Objects  
   - `translation`: String
-  - `synonims`: [String]
+  - `synonyms`: [String]
   - `frequency`: Number - the frequency of this translation  
 
   **Examples:** (some results was omitted for the sake of simplicity)  
