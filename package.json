@@ -1,0 +1,26 @@
+{
+  "name": "extended-google-translate-api",
+  "version": "1.0.0",
+  "description": "Free Google Translate Api - get word definitions, examples, synonyms and lots more from Google Translate",
+  "main": "get-word-info.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FreddieDeWitt/extended-google-translate-api"
+  },
+  "keywords": [
+    "node",
+    "google translate",
+    "api"
+  ],
+  "author": "Freddie DeWitt",
+  "license": "MIT",
+  "dependencies": {
+    "configstore": "^4.0.0",
+    "request": "^2.87.0",
+    "request-promise": "^4.2.2"
+  }
+}
