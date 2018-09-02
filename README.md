@@ -8,7 +8,7 @@ Free Google Translate API - get word definitions, examples, synonyms and a lot m
 - [Installation](#installation)
 - [Usage examples](#usage-examples)
 - [API](#api)
-  - [translate(text, sourceLang, destLang, dataOptions)](#-translate-text--sourcelang--destlang--dataoptions--)
+  - [translate(text, sourceLang, destLang, dataOptions)](#translatetext-sourcelang-destlang-dataoptions)
     - [Arguments](#arguments)
     - [Response](#response)
   - [dataOptions Object](#dataoptions-object)
