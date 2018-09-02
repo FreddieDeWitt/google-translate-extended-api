@@ -4,17 +4,18 @@ Free Google Translate API - get word definitions, examples, synonyms and a lot m
 
 ## Table of Contents
 
-* [Features](#features)
-* [Installation](#installation)
-* [Usage examples](#usage-examples)
-* [API](#api)
-  + [`translate(text, sourceLang, destLang, dataOptions)`](#-translate-text--sourcelang--destlang--dataoptions--)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage examples](#usage-examples)
+- [API](#api)
+  - [translate(text, sourceLang, destLang, dataOptions)](#-translate-text--sourcelang--destlang--dataoptions--)
     - [Arguments](#arguments)
     - [Response](#response)
-  + [dataOptions Object](#dataoptions-object)
+  - [dataOptions Object](#dataoptions-object)
     - [Fields](#fields)
     - [Defaults](#defaults)
-  + [Response Object](#response-object)
+  - [Response Object](#response-object)
+- [Contacts](#contacts)
 
 ## Features
 
@@ -32,7 +33,7 @@ Free Google Translate API - get word definitions, examples, synonyms and a lot m
 
 The first argument is query (it can be a single word or a sentence).  
 The second argument is a source language of query, third - desired translation language.  
-The fourth is optional - it is `dataOptions` object.  
+The fourth is optional - it is [`dataOptions`](#dataoptions-object) object.  
 
 ``` js
 
@@ -80,7 +81,7 @@ Result is:
 The list of all available languages is available [here](https://github.com/FreddieDeWitt/extended-google-translate-api/blob/master/languages.js).
 
 
-Or you can disable collocations and examples using `dataOptions` object:
+Or you can disable collocations and examples using [`dataOptions`](#dataoptions-object) object:
 
 ``` js
 
@@ -124,7 +125,7 @@ Which yields:
 ## API
 
 
-### `translate(text, sourceLang, destLang, dataOptions)`
+### translate(text, sourceLang, destLang, dataOptions)
 
 #### Arguments
 
@@ -134,12 +135,18 @@ Which yields:
 
 #### Response
 
-See [`Response Object`](#response-object)
+returns Promise that:
+- resolves with `Response Object` (Take a look at [`Response Object`](#response-object))  
+- or rejects with Error (when request to translate.google.com failed) that have the following properties:
+  - message - an Error message
+  - statusCode - status code of the bad request
+
 
 ### dataOptions Object
 
 #### Fields
 
+- `returnRawResponse`: Boolean - if this flag is chosen, then the [Result Object](#result-object) will be the raw data from request to translate.google.com.
 - `detailedTranslations`: Boolean
 - `synonyms`: Boolean
 - `detailedTranslationsSynonyms`: Boolean - almost each detailed translation contains synonyms.  Set this field to true if you want to get them.
@@ -154,6 +161,7 @@ See [`Response Object`](#response-object)
 ``` javascript
 
 defaultDataOptions = {
+    returnRawResponse: false,
     detailedTranslations: true,
     synonyms: false,
     detailedTranslationsSynonyms: false,
@@ -176,6 +184,10 @@ translate.defaultDataOptions.synonyms = true;
 ```
 
 ### Response Object
+
+if (`dataOptions.returnRawResponse === true`) then the result will be the raw data from request to translate.google.com.
+
+Otherwise:
 
 This object always contains the following fields:
 - `word`: String - the word itself
@@ -345,7 +357,7 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
 
 - `dataOptions.collocations === true`  
   **Field:** `collocations`: [String]  
-  The array contains all collocations for this word. 
+  The array contains all collocations for this word.  
   **Example:**  
   
   ``` json
@@ -358,3 +370,6 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
 
   ```
   
+## Contacts
+
+If you see a mistake in README, have a question or encountered a problem - please open an issue [here](https://github.com/FreddieDeWitt/extended-google-translate-api/issues) or write me at freddie.dewitt@yandex.com
