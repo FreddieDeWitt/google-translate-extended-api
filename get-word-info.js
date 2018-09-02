@@ -2,6 +2,7 @@ let request = require('request-promise');
 let gtoken = require('./token-generator');
 let languageSupport = require('./languages');
 const defaultDataOptions = {
+	returnRawResponse: false,
     detailedTranslations: true,
     synonyms: false,
     detailedTranslationsSynonyms: false,
@@ -159,6 +160,6 @@ let setCollocations = (rawObj, destObj, dataOptions) => {
     }
 }
 
-module.exports = getInfo;
+    module.exports = getInfo;
 module.exports.languages = languageSupport;
 module.exports.defaultDataOptions = defaultDataOptions;
