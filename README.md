@@ -2,6 +2,10 @@
 
 Free Google Translate API - get word definitions, examples, synonyms and a lot more
 
+# Updates
+
+Using @vitalets/google-translate-token for token extraction, so that the package works properly again.
+
 ## Table of Contents
 
 - [Features](#features)
@@ -78,7 +82,7 @@ Result is:
 }
 
 ```
-The list of all available languages is available [here](https://github.com/FreddieDeWitt/extended-google-translate-api/blob/master/languages.js).
+The list of all available languages is available [here](https://github.com/FreddieDeWitt/extended-google-translate-api/blob/master/languages.js). Use 'auto' as a source language to use Google's language detection.
 
 
 Or you can disable collocations and examples using [`dataOptions`](#dataoptions-object) object:
