@@ -1,5 +1,6 @@
 let request = require('request-promise');
-let gtoken = require('./token-generator');
+// let gtoken = require('./token-generator');
+const gtoken = require('@vitalets/google-translate-token');
 let languageSupport = require('./languages');
 const defaultDataOptions = {
 	returnRawResponse: false,
@@ -15,22 +16,7 @@ const defaultDataOptions = {
 replaceAll = function(target, search, replacement) {
     return target.split(search).join(replacement);
 };
-let getInitialTKKValue = async () => {
-    try {
-        let responce = await request("https://translate.google.com");
-        let match = /TKK.*?=.*?\'(.*?)\'/g.exec(responce);
-        // let d = decodeURIComponent(JSON.parse(a[1]));
-        // console.log("d", d);
-        let initCalculateFunction = replaceAll(replaceAll(match[1], '\\x3d','='), '\\x27','\'');
-        return eval(initCalculateFunction);
-    } catch (e) {
-        throw {
-            message,
-            statusCode: e.statusCode
-            
-        };
-    }
-};
+
 let getInfo = async (word, sourceLang, destLang, dataOptions) => {
     let trObj = {
         word
@@ -57,7 +43,7 @@ let getInfo = async (word, sourceLang, destLang, dataOptions) => {
         let token = await gtoken.get(word);
         let options = {
             method: 'GET',
-            uri: `https://translate.google.com/translate_a/single?client=t&sl=${sourceLang}&tl=${destLang}&hl=en&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=5&tsel=5&kc=9&tk=${token.value}&q=${word}`,
+            uri: `https://translate.google.com/translate_a/single?client=t&sl=${sourceLang}&tl=${destLang}&hl=${destLang}&dt=at&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&dt=t&ie=UTF-8&oe=UTF-8&otf=1&ssel=5&tsel=5&kc=9&tk=${token.value}&q=${encodeURIComponent(word)}`,
             json: true // Automatically stringifies the body to JSON
         };
         const rawObj = await request(options);

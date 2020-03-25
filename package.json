@@ -19,8 +19,8 @@
   "author": "Freddie DeWitt",
   "license": "MIT",
   "dependencies": {
-    "configstore": "^4.0.0",
+    "@vitalets/google-translate-token": "^1.1.0",
     "request": "^2.87.0",
-    "request-promise": "^4.2.2"
+    "request-promise": "^4.2.5"
   }
 }
