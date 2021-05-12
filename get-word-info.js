@@ -26,6 +26,7 @@ replaceAll = function(target, search, replacement) {
 var got = require('got');
 
 var languages = require('./languages');
+const { tr } = require('./languages');
 
 function extract(key, res) {
     var re = new RegExp(`"${key}":".*?"`);
@@ -123,6 +124,9 @@ let getInfo = async (word, sourceLang, destLang, dataOptions) => {
     
     try {
         const rawObj = await get_raw_object(word, {from:sourceLang, to:destLang})
+        
+        if (dataOptions.returnRawResponse)
+            return rawObj
 
         trObj["translation"] = getNested(rawObj, [1, 0, 0, 5, 0, 0])// rawObj[1][0][0][5][0][0];
         trObj["wordTranscription"] = getNested(rawObj,[0,0]);
@@ -134,14 +138,14 @@ let getInfo = async (word, sourceLang, destLang, dataOptions) => {
         // setCollocations(rawObj, trObj, dataOptions);
 
     } catch (e) {
-        throw e
-        // let message = e.name;
-        // if (e.statusCode === 403)
-        //     message = 'Authorization failed. The token may be invalid, so please check, if there is a new version of this module.'
-        // throw {
-        //     message,
-        //     statusCode: e.statusCode
-        // };
+        // throw e
+        let message = e.name;
+        if (e.statusCode === 403)
+            message = 'Authorization failed. The token may be invalid, so please check, if there is a new version of this module.'
+        throw {
+            message,
+            statusCode: e.statusCode
+        };
     }
     return trObj;
 }
@@ -202,7 +206,7 @@ let setDefinitions = (rawObj, destObj, dataOptions) => {
                         if (defElem.length >= 2 && defElem[1])
                             result.example = defElem[1]
                     }
-                    if (dataOptions.synonyms) {
+                    if (dataOptions.definitionSynonyms) {
                         if (defElem.length >= 6 && defElem[5]) {
                             result.synonyms = {}
                             synomynsPart = defElem[5]

@@ -4,7 +4,8 @@ Free Google Translate API - get word definitions, examples, synonyms and a lot m
 
 # Updates
 
-Using @vitalets/google-translate-token for token extraction, so that the package works properly again.
+- Using code from @vitalets/google-translate-api, as the request to Google Translate and the responce changed.
+- Change the available settings options, as the response from Google Translate has changed - `collocations` are not available anymore, and `synonyms` are changed to `definitionSynonyms` and they are stored inside the definitions (see the API for new [Fields](#fields))
 
 ## Table of Contents
 
@@ -77,19 +78,18 @@ Result is:
     "And how do you sap the energy of the insurgency when the parlous state of the economy keeps everyone desperately poor?",
     "Finally, I want to talk quite seriously about the parlous state of politics in this House.",
     "Is the state of American political fiction really so parlous perilous?"
-  ],
-  "collocations": []
+  ]
 }
 
 ```
 The list of all available languages is available [here](https://github.com/FreddieDeWitt/extended-google-translate-api/blob/master/languages.js). Use 'auto' as a source language to use Google's language detection.
 
 
-Or you can disable collocations and examples using [`dataOptions`](#dataoptions-object) object:
+Or you can disable examples using [`dataOptions`](#dataoptions-object) object:
 
 ``` js
 
-translate("dog", "en", "de", {examples: false, collocations: false}).then((res) => {
+translate("dog", "en", "de", {examples: false}).then((res) => {
     console.log(JSON.stringify(res, undefined, 2));
 }).catch(console.log);
 
@@ -152,12 +152,11 @@ returns Promise that:
 
 - `returnRawResponse`: Boolean - if this flag is chosen, then the [Result Object](#result-object) will be the raw data from request to translate.google.com.
 - `detailedTranslations`: Boolean
-- `synonyms`: Boolean
+- `definitionSynonyms`: Boolean - synonyms that are available for each of the definitions. Set this field to true if you want to get them.
 - `detailedTranslationsSynonyms`: Boolean - almost each detailed translation contains synonyms.  Set this field to true if you want to get them.
 - `definitions`: Boolean
 - `definitionExamples`: Boolean - almost each definition contains example(s). Set this field to true if you want to get them.
 - `examples`: Boolean
-- `collocations`: Boolean
 - `removeStyles`: Boolean - google translate returns the word examples with the word surrounded by `<b>`, `</b>`. Setting `removeStyles` to true removes all HTML styles from the examples.
 
 #### Defaults
@@ -167,15 +166,13 @@ returns Promise that:
 defaultDataOptions = {
     returnRawResponse: false,
     detailedTranslations: true,
-    synonyms: false,
+    definitionSynonyms: false,
     detailedTranslationsSynonyms: false,
     definitions: true,
     definitionExamples: false,
     examples: true,
-    collocations: true,
     removeStyles: true
 }
-
 ```
 
 You can always change defaults like this:  
@@ -183,7 +180,7 @@ You can always change defaults like this:
 ``` javascript
 
 const translate = require('extended-google-translate-api');
-translate.defaultDataOptions.synonyms = true;
+translate.defaultDataOptions.definitions = true;
 
 ```
 
@@ -208,7 +205,7 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
   Each key contains an array of translations (`String`) or if `dataOption.detailedTranslationsSynonyms === true` - an array of the following Objects  
   - `translation`: String
   - `synonyms`: [String]
-  - `frequency`: Number - the frequency of this translation  
+  - `frequency`: Number - the frequency of this translation (1, 2, 3). 1 means the most frequently, 3 - the least frequent words.
 
   **Examples:** (some results was omitted for the sake of simplicity)  
   - `dataOption.detailedTranslationsSynonyms === false`  
@@ -235,7 +232,7 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
             "dog",
             "hound"
           ],
-          "frequency": 0.51075
+          "frequency": 1
         },
         {
           "translation": "Rüde",
@@ -243,35 +240,10 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
             "male",
             "dog"
           ],
-          "frequency": 0.0017576985
+          "frequency": 3
         }
       ]
     }
-
-  ```
-
-- `dataObject.synonyms === true`  
-  **Field:** `synonyms`: Object  
-  The keys of this object are word types (e.g. `noun`, `verb` etc.).  
-  Each key contains an array of arrays with `String`  
-  **Examples:**  
-
-  ``` json
-
-  "synonyms": {
-    "noun": [
-      [
-        "hound",
-        "canine",
-        "mongrel",
-        "mutt",
-      ],
-      [
-        "hot dog",
-        "hotdog",
-      ]
-    ]
-  }
 
   ```
 
@@ -281,6 +253,8 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
   Each key contains an array of definitions (`String`) or if `dataOptions.definitionExamples === true` - an array of the following objects:  
   - `definition`: String
   - `example`: String  
+  Setting `dataOptions.definitionExamples === true` also adds the `synonyms` field to the object.
+  `synonyms` field is an object, the keys of which denote the type of the synonyms. The regular ones are stored under the key `normal`, some other possible tags are for instance `informal`, `formal`. The synonyms of each type are store in a string array.
   **Examples:**  
   - `dataOptions.definitionExamples === true`
 
@@ -326,6 +300,51 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
   }
 
   ```
+`dataOptions.definitionSynonyms === true`
+  ``` json
+  "definitions": {
+    "noun": [
+      {
+        "definition": "a domesticated carnivorous mammal that typically has a long snout, an acute sense of smell, nonretractable claws, and a barking, howling, or whining voice.",
+        "synonyms": {
+          "normal": [
+            "canine",
+            "hound"
+          ],
+          "informal": [
+            "doggy",
+            "pooch",
+            "mutt"
+          ]
+        }
+      },
+      {
+        "definition": "a mechanical device for gripping."
+      },
+      {
+        "definition": "short for firedog."
+      }
+    ],
+    "verb": [
+      {
+        "definition": "follow (someone or their movements) closely and persistently.",
+        "example": "photographers seemed to dog her every step",
+        "synonyms": {
+          "normal": [
+            "pursue",
+            "follow",
+            "stalk",
+            "track",
+            "haunt"
+          ],
+          "informal": [
+            "tail"
+          ]
+        }
+      }
+    ]
+  }
+  ```
 - `dataOptions.examples === true`  
   **Field:** `examples`: [String]  
   The array contains all examples for the word.  
@@ -356,21 +375,6 @@ Availability of other fields depends on [`dataOptions` Object](#dataoptions-obje
         "During the Second World War, he treated Sinclair like a <b>dog</b> .",
         "a <b>dog</b> fox"
     ]
-
-  ```
-
-- `dataOptions.collocations === true`  
-  **Field:** `collocations`: [String]  
-  The array contains all collocations for this word.  
-  **Example:**  
-  
-  ``` json
-
-  "collocations": [
-    "hot dog",
-    "dog food",
-    "dog leash"
-  ]
 
   ```
   
