@@ -32,7 +32,7 @@ Free Extended Google Translate API - get word definitions, examples, synonyms an
 
 ## Installation
 
-```npm i extended-google-translate-api```
+```npm i google-translate-extended-api```
 
 ## Usage examples
 
