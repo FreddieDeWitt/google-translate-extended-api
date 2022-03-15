@@ -1,6 +1,6 @@
-# extended-google-translate-api
+# google-translate-extended-api
 
-Free Google Translate API - get word definitions, examples, synonyms and a lot more
+Free Extended Google Translate API - get word definitions, examples, synonyms and a lot more
 
 # Updates
 
