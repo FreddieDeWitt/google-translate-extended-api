@@ -42,7 +42,7 @@ The fourth is optional - it is [`dataOptions`](#dataoptions-object) object.
 
 ``` js
 
-const translate = require('extended-google-translate-api');
+const translate = require('google-translate-extended-api');
 
 translate("parlous", "en", "de").then((res) => {
     console.log(JSON.stringify(res, undefined, 2));
