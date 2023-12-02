@@ -4,6 +4,7 @@ Free Extended Google Translate API - get word definitions, examples, synonyms an
 
 # Updates
 
+- Fix word type being null
 - Using code from @vitalets/google-translate-api, as the request to Google Translate and the responce changed.
 - Change the available settings options, as the response from Google Translate has changed - `collocations` are not available anymore, and `synonyms` are changed to `definitionSynonyms` and they are stored inside the definitions (see the API for new [Fields](#fields))
 

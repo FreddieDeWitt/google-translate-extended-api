@@ -1,13 +1,13 @@
 var querystring = require('querystring');
 
 var got = require('got');
-
+let languages = require('./languages');
+let word_types = require('./word_types')
 
 // safely get access to a nested element of object o
 // return null if some property doesn't exist at any level
 const getNested = (o, p) =>
   p.reduce((xs, x) => (xs && xs[x]) ? xs[x] : null, o)
-let languageSupport = require('./languages');
 
 const defaultDataOptions = {
 	returnRawResponse: false,
@@ -23,10 +23,7 @@ replaceAll = function(target, search, replacement) {
     return target.split(search).join(replacement);
 };
 
-var got = require('got');
 
-var languages = require('./languages');
-const { tr } = require('./languages');
 
 function extract(key, res) {
     var re = new RegExp(`"${key}":".*?"`);
@@ -104,10 +101,10 @@ let getInfo = async (word, sourceLang, destLang, dataOptions) => {
     let trObj = {
         word
     }
-    if (!languageSupport.isSupported(sourceLang)) {
+    if (!languages.isSupported(sourceLang)) {
         throw  `Language '${sourceLang} ' is not supported`;
     } 
-    if (!languageSupport.isSupported(destLang)) {
+    if (!languages.isSupported(destLang)) {
         throw  `Language '${destLang}' is not supported`;
     }
     if (dataOptions == null)
@@ -156,7 +153,7 @@ let setDetailedTranslations = (rawObj, destObj, dataOptions)=> {
         translationPart = getNested(rawObj, [3,5,0])
         if (translationPart) {
             translationPart.forEach(translation => {
-                let wordType = translation[0];
+                let wordType = getType(translation, 4)
                 destObj["translations"][wordType] = translation[1].map(details => {
                     if (dataOptions.detailedTranslationsSynonyms)
                         return {
@@ -185,6 +182,13 @@ let setSynonyms = (rawObj, destObj, dataOptions) => {
         })
     }
 };
+let getType = (traslation_part, index) => {
+    let wordType = "Generic"
+    if (traslation_part.length >= index + 1) {
+        wordType = word_types.get_type(traslation_part[index]);
+    }
+    return wordType
+}
 
 let setDefinitions = (rawObj, destObj, dataOptions) => {
     destObj["definitions"] = {};
@@ -196,7 +200,9 @@ let setDefinitions = (rawObj, destObj, dataOptions) => {
         definitionsPart.forEach((definitionDetails) => {
             if (definitionDetails.length < 2)
                 return
-            destObj["definitions"][definitionDetails[0]] = definitionDetails[1].map((defElem) => {
+            let wordType = getType(definitionDetails, 3)
+
+            destObj["definitions"][wordType] = definitionDetails[1].map((defElem) => {
                 if (defElem.length == 0)
                     return
 
@@ -254,5 +260,5 @@ let setCollocations = (rawObj, destObj, dataOptions) => {
 }
 
 module.exports = getInfo;
-module.exports.languages = languageSupport;
+module.exports.languages = languages;
 module.exports.defaultDataOptions = defaultDataOptions;

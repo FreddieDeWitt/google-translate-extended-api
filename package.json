@@ -1,6 +1,6 @@
 {
   "name": "google-translate-extended-api",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Free Extended Google Translate Api - get word definitions, examples, synonyms and lots more from Google Translate",
   "main": "get-word-info.js",
   "scripts": {
@@ -25,7 +25,7 @@
   "author": "Freddie DeWitt",
   "license": "MIT",
   "dependencies": {
-    "got": "^11.8.2",
+    "got": "^11.8.6",
     "querystring": "^0.2.1"
   }
 }
