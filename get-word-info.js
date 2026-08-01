@@ -30,6 +30,17 @@ const defaultDataOptions = {
     definitionExamples: false,
     examples: true,
     removeStyles: true,
+    articles: 'combine', // 'none' | 'combine' | 'separate'
+};
+
+// entry.previous_word can be anything from "der"/"le" to an elided "l'",
+// so we can't always join with a space; if it doesn't end in a letter
+// (e.g. an apostrophe) we merge directly, otherwise we add a space
+const combineWithArticle = (word, previousWord) => {
+    if (!previousWord) return word;
+    const lastChar = previousWord[previousWord.length - 1];
+    const separator = /\p{L}/u.test(lastChar) ? ' ' : '';
+    return previousWord + separator + word;
 };
 
 // function that sends a request to google translate service and return
@@ -115,13 +126,10 @@ const getInfo = async (word, sourceLang, destLang, dataOptions) => {
         const transSentence = sentences.find((s) => s.trans);
         const translitSentence = sentences.find((s) => s.src_translit);
 
-        trObj['translation'] = transSentence ? transSentence.trans : null;
-        trObj['wordTranscription'] = translitSentence
-            ? translitSentence.src_translit
-            : null;
-        trObj['translationTranscription'] = translitSentence
-            ? translitSentence.translit || null
-            : null;
+        trObj['translation'] = transSentence?.trans ?? null;
+        trObj['detectedSourceLang'] = rawObj.src ?? null;
+        trObj['wordTranscription'] = translitSentence?.src_translit ?? null;
+        trObj['translationTranscription'] = translitSentence?.translit ?? null;
         setDetailedTranslations(rawObj, trObj, dataOptions);
         setDefinitions(rawObj, trObj, dataOptions);
         setExamples(rawObj, trObj, dataOptions);
@@ -149,13 +157,27 @@ const setDetailedTranslations = (rawObj, destObj, dataOptions) => {
                 destObj['translations'][wordType] = (
                     translation.entry || []
                 ).map((entry) => {
-                    if (dataOptions.detailedTranslationsSynonyms)
-                        return {
-                            translation: entry.word,
-                            synonyms: entry.reverse_translation,
-                            frequency: entry.score,
-                        };
-                    return entry.word;
+                    const word =
+                        dataOptions.articles === 'combine'
+                            ? combineWithArticle(
+                                  entry.word,
+                                  entry.previous_word,
+                              )
+                            : entry.word;
+
+                    const needsObject =
+                        dataOptions.detailedTranslationsSynonyms ||
+                        dataOptions.articles === 'separate';
+                    if (!needsObject) return word;
+
+                    const result = { translation: word };
+                    if (dataOptions.detailedTranslationsSynonyms) {
+                        result.synonyms = entry.reverse_translation;
+                        result.frequency = entry.score;
+                    }
+                    if (dataOptions.articles === 'separate')
+                        result.article = entry.previous_word || null;
+                    return result;
                 });
             });
         }
@@ -170,6 +192,22 @@ const setDefinitions = (rawObj, destObj, dataOptions) => {
     const definitionsPart = rawObj.definitions;
     if (definitionsPart) {
         const synonymsById = {};
+        // weirdly, the examples (separate part of the request)
+        // are also connected to the definitions, and they are not always the same
+        // as what's given with the definition, so these are places into moreExamples
+        const examplesById = {};
+        if (dataOptions.definitionExamples) {
+            const examplesPart = getNested(rawObj, ['examples', 'example']);
+            (examplesPart || []).forEach((example) => {
+                if (!example.definition_id) return;
+                const text = dataOptions.removeStyles
+                    ? example.text.replace('<b>', '').replace('</b>', '')
+                    : example.text;
+                examplesById[example.definition_id] = (
+                    examplesById[example.definition_id] || []
+                ).concat(text);
+            });
+        }
         if (dataOptions.definitionSynonyms && rawObj.synsets) {
             rawObj.synsets.forEach((synset) => {
                 (synset.entry || []).forEach((synEntry) => {
@@ -202,6 +240,10 @@ const setDefinitions = (rawObj, destObj, dataOptions) => {
                         if (dataOptions.definitionExamples) {
                             if (defElem.example)
                                 result.example = defElem.example;
+                            const moreExamples =
+                                examplesById[defElem.definition_id];
+                            if (moreExamples)
+                                result.moreExamples = moreExamples;
                         }
                         if (dataOptions.definitionSynonyms) {
                             if (synonymsById[defElem.definition_id])
