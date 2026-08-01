@@ -1,53 +1,49 @@
-var querystring = require('querystring');
+const querystring = require('querystring');
 
-var got = require('got');
-let languages = require('./languages');
-let word_types = require('./word_types')
+const got = require('got');
+const languages = require('./languages');
+const wordTypes = require('./word_types');
 
 // safely get access to a nested element of object o
 // return null if some property doesn't exist at any level
 const getNested = (o, p) =>
-  p.reduce((xs, x) => (xs && xs[x]) ? xs[x] : null, o)
+    p.reduce((xs, x) => (xs && xs[x] ? xs[x] : null), o);
+
+// pos_enum is Google's internal, language-independent POS id; pos is a
+// human-readable label that may not be stable/English for every source
+// language, so prefer the enum and only fall back to the raw string
+const getWordType = (entry) => {
+    const type =
+        typeof entry.pos_enum === 'number'
+            ? wordTypes.get_type(entry.pos_enum)
+            : null;
+    if (type && type !== 'General') return type.toLowerCase();
+    return (entry.pos || 'generic').toLowerCase();
+};
 
 const defaultDataOptions = {
-	returnRawResponse: false,
+    returnRawResponse: false,
     detailedTranslations: true,
     definitionSynonyms: false,
     detailedTranslationsSynonyms: false,
     definitions: true,
     definitionExamples: false,
     examples: true,
-    removeStyles: true
-}
-replaceAll = function(target, search, replacement) {
-    return target.split(search).join(replacement);
+    removeStyles: true,
 };
 
-
-
-function extract(key, res) {
-    var re = new RegExp(`"${key}":".*?"`);
-    var result = re.exec(res.body);
-    if (result !== null) {
-        return result[0].replace(`"${key}":"`, '').slice(0, -1);
-    }
-    return '';
-}
-
-
-// function that sends a request to google translate service and return 
+// function that sends a request to google translate service and return
 // a translation object
-// fully based on code from @vitalets/google-translate-api
 async function get_raw_object(text, opts, gotopts) {
     opts = opts || {};
     gotopts = gotopts || {};
-    gotopts.headers = {}
-    var e;
+    gotopts.headers = {};
+    let e;
     [opts.from, opts.to].forEach(function (lang) {
         if (lang && !languages.isSupported(lang)) {
             e = new Error();
             e.code = 400;
-            e.message = 'The language \'' + lang + '\' is not supported';
+            e.message = "The language '" + lang + "' is not supported";
         }
     });
     if (e) {
@@ -63,201 +59,176 @@ async function get_raw_object(text, opts, gotopts) {
     opts.from = languages.getCode(opts.from);
     opts.to = languages.getCode(opts.to);
 
-    var url = 'https://translate.google.' + opts.tld;
-    res = await got(url, gotopts)
-   
-    var data = {
-        'rpcids': 'MkEWBc',
-        'f.sid': extract('FdrFJe', res),
-        'bl': extract('cfb2h', res),
-        'hl': 'en-US',
-        'soc-app': 1,
-        'soc-platform': 1,
-        'soc-device': 1,
-        '_reqid': Math.floor(1000 + (Math.random() * 9000)),
-        'rt': 'c'
+    const data = {
+        client: 'gtx',
+        sl: opts.from,
+        tl: opts.to,
+        dj: 1,
+        q: text,
+        dt: ['t', 'at', 'bd', 'ex', 'ld', 'md', 'qca', 'rw', 'rm', 'ss'],
     };
-    url = url + '/_/TranslateWebserverUi/data/batchexecute?' + querystring.stringify(data);
-    gotopts.body = 'f.req=' + encodeURIComponent(JSON.stringify([[['MkEWBc', JSON.stringify([[text, opts.from, opts.to, true], [null]]), null, 'generic']]])) + '&';
-    gotopts.headers['content-type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+    const url =
+        'https://translate.google.' +
+        opts.tld +
+        '/translate_a/single?' +
+        querystring.stringify(data);
 
-
-    res = await got.post(url, gotopts)
-    var json = res.body.slice(6);
-    var length = '';
+    const res = await got(url, gotopts);
 
     try {
-        length = /^\d+/.exec(json)[0];
-        json = JSON.parse(json.slice(length.length, parseInt(length, 10) + length.length));
-        json = JSON.parse(json[0][2]);
-        return json
-    } catch (e) {
+        return JSON.parse(res.body);
+    } catch {
         return Promise.reject();
     }
 }
 
-
-let getInfo = async (word, sourceLang, destLang, dataOptions) => {
-    let trObj = {
-        word
-    }
+const getInfo = async (word, sourceLang, destLang, dataOptions) => {
+    const trObj = {
+        word,
+    };
     if (!languages.isSupported(sourceLang)) {
-        throw  `Language '${sourceLang} ' is not supported`;
-    } 
-    if (!languages.isSupported(destLang)) {
-        throw  `Language '${destLang}' is not supported`;
+        throw `Language '${sourceLang} ' is not supported`;
     }
-    if (dataOptions == null)
-        dataOptions = {};
+    if (!languages.isSupported(destLang)) {
+        throw `Language '${destLang}' is not supported`;
+    }
+    if (dataOptions == null) dataOptions = {};
     Object.keys(dataOptions).forEach((key) => {
         if (defaultDataOptions[key] == null) {
             console.log(`Warning! DataOptions field "${key}" is not supported`);
         }
-    })
+    });
     Object.keys(defaultDataOptions).forEach((key) => {
-        if (dataOptions[key] == null) 
+        if (dataOptions[key] == null)
             dataOptions[key] = defaultDataOptions[key];
-    })
-    
-    try {
-        const rawObj = await get_raw_object(word, {from:sourceLang, to:destLang})
-        
-        if (dataOptions.returnRawResponse)
-            return rawObj
+    });
 
-        trObj["translation"] = getNested(rawObj, [1, 0, 0, 5, 0, 0])// rawObj[1][0][0][5][0][0];
-        trObj["wordTranscription"] = getNested(rawObj,[0,0]);
-        trObj["translationTranscription"] = getNested(rawObj,[1, 0, 0, 1]);
+    try {
+        const rawObj = await get_raw_object(word, {
+            from: sourceLang,
+            to: destLang,
+        });
+
+        if (dataOptions.returnRawResponse) return rawObj;
+
+        const sentences = rawObj.sentences || [];
+        const transSentence = sentences.find((s) => s.trans);
+        const translitSentence = sentences.find((s) => s.src_translit);
+
+        trObj['translation'] = transSentence ? transSentence.trans : null;
+        trObj['wordTranscription'] = translitSentence
+            ? translitSentence.src_translit
+            : null;
+        trObj['translationTranscription'] = translitSentence
+            ? translitSentence.translit || null
+            : null;
         setDetailedTranslations(rawObj, trObj, dataOptions);
-        // setSynonyms(rawObj, trObj, dataOptions);
         setDefinitions(rawObj, trObj, dataOptions);
         setExamples(rawObj, trObj, dataOptions);
-        // setCollocations(rawObj, trObj, dataOptions);
-
     } catch (e) {
         // throw e
         let message = e.name;
         if (e.statusCode === 403)
-            message = 'Authorization failed. The token may be invalid, so please check, if there is a new version of this module.'
+            message =
+                'Request failed. Please check if there is a new version of this module.';
         throw {
             message,
-            statusCode: e.statusCode
+            statusCode: e.statusCode,
         };
     }
     return trObj;
-}
+};
 
-let setDetailedTranslations = (rawObj, destObj, dataOptions)=> {
+const setDetailedTranslations = (rawObj, destObj, dataOptions) => {
     if (dataOptions.detailedTranslations) {
-        destObj[["translations"]] = {};
-        translationPart = getNested(rawObj, [3,5,0])
-        if (translationPart) {
-            translationPart.forEach(translation => {
-                let wordType = getType(translation, 4)
-                destObj["translations"][wordType] = translation[1].map(details => {
+        destObj['translations'] = {};
+        const dictPart = rawObj.dict;
+        if (dictPart) {
+            dictPart.forEach((translation) => {
+                const wordType = getWordType(translation);
+                destObj['translations'][wordType] = (
+                    translation.entry || []
+                ).map((entry) => {
                     if (dataOptions.detailedTranslationsSynonyms)
                         return {
-                            translation: details[0],
-                            synonyms: details[2],
-                            frequency: details[3]
+                            translation: entry.word,
+                            synonyms: entry.reverse_translation,
+                            frequency: entry.score,
                         };
-                    return details[0];
+                    return entry.word;
                 });
             });
         }
     }
-
-}
-
-let setSynonyms = (rawObj, destObj, dataOptions) => {
-    if (!dataOptions.synonyms) {
-        return
-    }
-    destObj["synonyms"] = {};
-    synonimsPart = rawObj[3][1][0]
-    if (dataOptions.synonyms && rawObj[11]) {
-        synonimsPart.forEach((synonymDetailes) => {
-            let synonymsObj = destObj["synonyms"];
-            synonymsObj[synonymDetailes[0]] = synonymDetailes[1].map(synomyns => synomyns[0]);
-        })
-    }
 };
-let getType = (traslation_part, index) => {
-    let wordType = "Generic"
-    if (traslation_part.length >= index + 1) {
-        wordType = word_types.get_type(traslation_part[index]);
-    }
-    return wordType
-}
 
-let setDefinitions = (rawObj, destObj, dataOptions) => {
-    destObj["definitions"] = {};
+const setDefinitions = (rawObj, destObj, dataOptions) => {
+    destObj['definitions'] = {};
     if (!dataOptions.definitions) {
-        return
+        return;
     }
-    definitionsPart = getNested(rawObj,[3, 1, 0])
+    const definitionsPart = rawObj.definitions;
     if (definitionsPart) {
-        definitionsPart.forEach((definitionDetails) => {
-            if (definitionDetails.length < 2)
-                return
-            let wordType = getType(definitionDetails, 3)
-
-            destObj["definitions"][wordType] = definitionDetails[1].map((defElem) => {
-                if (defElem.length == 0)
-                    return
-
-                if (dataOptions.definitionExamples || dataOptions.synonyms) {
-                    result = {definition: defElem[0]}
-                    if (dataOptions.definitionExamples) {
-                        if (defElem.length >= 2 && defElem[1])
-                            result.example = defElem[1]
-                    }
-                    if (dataOptions.definitionSynonyms) {
-                        if (defElem.length >= 6 && defElem[5]) {
-                            result.synonyms = {}
-                            synomynsPart = defElem[5]
-                            synomynsPart.forEach((synObj)=> {
-                                if (synObj.length == 0)
-                                    return
-                                synonyms = synObj[0].map((syn)=>syn[0])
-                                synonymsTag = "normal"
-                                if (synObj.length > 1)
-                                    synonymsTag = synObj[1]
-                                result.synonyms[synonymsTag] = synonyms
-                            })
-                        }
-                    }
-                    return result
-                } else 
-                    return defElem[0];
+        const synonymsById = {};
+        if (dataOptions.definitionSynonyms && rawObj.synsets) {
+            rawObj.synsets.forEach((synset) => {
+                (synset.entry || []).forEach((synEntry) => {
+                    if (!synEntry.synonym || !synEntry.synonym.length) return;
+                    let tag = 'normal';
+                    if (synEntry.label_info && synEntry.label_info.register)
+                        tag = synEntry.label_info.register.join(', ');
+                    const byId = (synonymsById[synEntry.definition_id] =
+                        synonymsById[synEntry.definition_id] || {});
+                    byId[tag] = (byId[tag] || []).concat(synEntry.synonym);
+                });
             });
-        })
+        }
+
+        definitionsPart.forEach((definitionDetails) => {
+            if (
+                !definitionDetails.entry ||
+                definitionDetails.entry.length === 0
+            )
+                return;
+            const wordType = getWordType(definitionDetails);
+
+            destObj['definitions'][wordType] = definitionDetails.entry.map(
+                (defElem) => {
+                    if (
+                        dataOptions.definitionExamples ||
+                        dataOptions.definitionSynonyms
+                    ) {
+                        const result = { definition: defElem.gloss };
+                        if (dataOptions.definitionExamples) {
+                            if (defElem.example)
+                                result.example = defElem.example;
+                        }
+                        if (dataOptions.definitionSynonyms) {
+                            if (synonymsById[defElem.definition_id])
+                                result.synonyms =
+                                    synonymsById[defElem.definition_id];
+                        }
+                        return result;
+                    } else return defElem.gloss;
+                },
+            );
+        });
     }
 };
 
-let setExamples = (rawObj, destObj, dataOptions) => {
-    destObj["examples"] = [];
-    if (!dataOptions.examples)
-        return
-    examplesPart = getNested(rawObj,[3,2])
+const setExamples = (rawObj, destObj, dataOptions) => {
+    destObj['examples'] = [];
+    if (!dataOptions.examples) return;
+    const examplesPart = getNested(rawObj, ['examples', 'example']);
     if (examplesPart) {
-        destObj["examples"] = examplesPart[0].map(element => {
+        destObj['examples'] = examplesPart.map((element) => {
             if (dataOptions.removeStyles) {
-                return element[1].replace('<b>','').replace('</b>', '');
+                return element.text.replace('<b>', '').replace('</b>', '');
             }
-            return element[1]}
-        );
+            return element.text;
+        });
     }
 };
-
-let setCollocations = (rawObj, destObj, dataOptions) => {
-    if (dataOptions.collocations) {
-        destObj["collocations"] = [];
-    }
-    if (dataOptions.collocations && rawObj[14]) {
-        destObj["collocations"] = rawObj[14][0];
-    }
-}
 
 module.exports = getInfo;
 module.exports.languages = languages;
