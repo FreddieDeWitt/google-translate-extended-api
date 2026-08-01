@@ -1,31 +1,42 @@
 {
-  "name": "google-translate-extended-api",
-  "version": "2.0.5",
-  "description": "Free Extended Google Translate Api - get word definitions, examples, synonyms and lots more from Google Translate",
-  "main": "get-word-info.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/FreddieDeWitt/google-translate-extended-api"
-  },
-  "keywords": [
-    "node",
-    "google translate",
-    "api",
-    "translate",
-    "translator",
-    "google",
-    "translate",
-    "free",
-    "language"
-  ],
-  "author": "Freddie DeWitt",
-  "license": "MIT",
-  "dependencies": {
-    "got": "^11.8.6",
-    "querystring": "^0.2.1"
-  }
+    "name": "google-translate-extended-api",
+    "version": "2.0.5",
+    "description": "Free Extended Google Translate Api - get word definitions, examples, synonyms and lots more from Google Translate",
+    "main": "get-word-info.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node index.js",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/FreddieDeWitt/google-translate-extended-api"
+    },
+    "keywords": [
+        "node",
+        "google translate",
+        "api",
+        "translate",
+        "translator",
+        "google",
+        "translate",
+        "free",
+        "language"
+    ],
+    "author": "Freddie DeWitt",
+    "license": "MIT",
+    "dependencies": {
+        "got": "^11.8.6",
+        "querystring": "^0.2.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.8.0",
+        "eslint-config-prettier": "^10.1.8",
+        "globals": "^17.8.0",
+        "prettier": "^3.9.6"
+    }
 }
